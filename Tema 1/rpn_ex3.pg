@@ -1,0 +1,35 @@
+%! rpn(+Notation:list(atomic), -Outcome:number) is det.
+
+rpn(Notation, Outcome):-
+  rpn(Notation, [], Outcome).
+
+rpn([], [Outcome], Outcome):-
+  number(Outcome).
+% Push operands onto the stack.
+rpn([Operand|Notation], Stack, Outcome):-
+  number(Operand), !,
+  rpn(Notation, [Operand|Stack], Outcome).
+% Evaluate n-ary operators w.r.t. the top n operands on the stack.
+rpn([Op|Notation], Stack, Outcome):-
+  % Notice that there can be multiple operators with the same name.
+  current_op(_, OpType, Op),
+  op_type_arity(OpType, OpArity),
+
+  % Select the appropriate operands.
+  length(OperandsRev, OpArity),
+  append(OperandsRev, NewStack, Stack),
+
+  % Apply the operator to its operands.
+  reverse(OperandsRev, Operands),
+  Expression =.. [Op|Operands],
+  Result is Expression,
+
+  rpn(Notation, [Result|NewStack], Outcome).
+
+op_type_arity(fx,  1).
+op_type_arity(fy,  1).
+op_type_arity(xf,  1).
+op_type_arity(xfx, 2).
+op_type_arity(xfy, 2).
+op_type_arity(yf,  1).
+op_type_arity(yfx, 2).
