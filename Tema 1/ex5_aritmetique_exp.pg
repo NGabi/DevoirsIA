@@ -1,0 +1,18 @@
+plus(0,X,X).                    
+plus(s(X),Y,Z):-plus(X,s(Y),Z).  
+
+minus(X,0,X).                      
+minus(s(X),s(Y),Z):-minus(X,Y,Z). 
+
+times(0,X,0).
+times(s(x),Y,Z):-times(X,Y,XY),plus(XY,Y,Z).
+
+%pentru multiplicare
+n(0).               
+n(s(X)) :- n(X).
+plus(0,Y,Y)       :- n(Y).
+plus(s(X),Y,s(Z)) :- plus(X,Y,Z).  % plus(X,Y+1,Z+1) = plus(X,Y,Z)
+
+time(_Y,0,0).
+time(X,s(Y),Z) :- time(X,Y,Z1),
+	           plus(X,Z1,Z).
