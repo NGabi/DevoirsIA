@@ -1,35 +1,53 @@
-%! rpn(+Notation:list(atomic), -Outcome:number) is det.
+% P93 (***)  Arithmetic puzzle: Given a list of integer numbers, 
+% find a correct way of inserting arithmetic signs such that 
+% the result is a correct equation. The idea to the problem
+% is from Roland Beuret. Thanx.
 
-rpn(Notation, Outcome):-
-  rpn(Notation, [], Outcome).
+% Example: With the list of  numbers [2,3,5,7,11] we can form the
+% equations  2-3+5+7 = 11  or  2 = (3*5+7)/11 (and ten others!).
 
-rpn([], [Outcome], Outcome):-
-  number(Outcome).
-% Push operands onto the stack.
-rpn([Operand|Notation], Stack, Outcome):-
-  number(Operand), !,
-  rpn(Notation, [Operand|Stack], Outcome).
-% Evaluate n-ary operators w.r.t. the top n operands on the stack.
-rpn([Op|Notation], Stack, Outcome):-
-  % Notice that there can be multiple operators with the same name.
-  current_op(_, OpType, Op),
-  op_type_arity(OpType, OpArity),
+% equation(L,LT,RT) :- L is the list of numbers which are the leaves
+%    in the arithmetic terms LT and RT - from left to right. The 
+%    arithmetic evaluation yields the same result for LT and RT.
 
-  % Select the appropriate operands.
-  length(OperandsRev, OpArity),
-  append(OperandsRev, NewStack, Stack),
+equation(L,LT,RT) :-
+   split(L,LL,RL),              % decompose the list L
+   term(LL,LT),                 % construct the left term
+   term(RL,RT),                 % construct the right term
+   LT =:= RT.                   % evaluate and compare the terms
 
-  % Apply the operator to its operands.
-  reverse(OperandsRev, Operands),
-  Expression =.. [Op|Operands],
-  Result is Expression,
+% term(L,T) :- L is the list of numbers which are the leaves in
+%    the arithmetic term T - from left to right.
 
-  rpn(Notation, [Result|NewStack], Outcome).
+term([X],X).                    % a number is a term in itself
+% term([X],-X).                   % unary minus
+term(L,T) :-                    % general case: binary term
+   split(L,LL,RL),              % decompose the list L
+   term(LL,LT),                 % construct the left term
+   term(RL,RT),                 % construct the right term
+   binterm(LT,RT,T).            % construct combined binary term
 
-op_type_arity(fx,  1).
-op_type_arity(fy,  1).
-op_type_arity(xf,  1).
-op_type_arity(xfx, 2).
-op_type_arity(xfy, 2).
-op_type_arity(yf,  1).
-op_type_arity(yfx, 2).
+% binterm(LT,RT,T) :- T is a combined binary term constructed from
+%    left-hand term LT and right-hand term RT
+
+binterm(LT,RT,LT+RT).
+binterm(LT,RT,LT-RT).
+binterm(LT,RT,LT*RT).
+binterm(LT,RT,LT/RT) :- RT =\= 0.   % avoid division by zero
+
+% split(L,L1,L2) :- split the list L into non-empty parts L1 and L2
+%    such that their concatenation is L
+
+split(L,L1,L2) :- append(L1,L2,L), L1 = [_|_], L2 = [_|_].
+
+% do(L) :- find all solutions to the problem as given by the list of
+%    numbers L, and print them out, one solution per line.
+
+do(L) :- 
+   equation(L,LT,RT),
+      writef('%w = %w\n',[LT,RT]),
+   fail.
+do(_).
+
+
+% Try the following goal:   ?- do([2,3,5,7,11]).
